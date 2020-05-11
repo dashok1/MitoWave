@@ -1,0 +1,53 @@
+1.	Input TMRM fluorescence intensity signal from each cell into MATLAB as an array.
+2.	Run this code (Ischemia Depolarization time point results are in the array “IPT_2MAT_Depolarization_minutes” in minutes :
+
+TMRM_Ischemia=TMRM(42:282, :); % Change according to the time points of Ischemia
+%%Multi-level Signal Reconstruction
+numberofcells= size(TMRM_Ischemia,2);
+modwtc_2={};
+for k= 1: numberofcells
+    k
+    local={};
+    levelForReconstruction = [false, false, false, false, true];
+    wt = modwt(TMRM_Ischemia(:,k), 'sym4', 4);
+    mra = modwtmra(wt, 'sym4');
+    TMRM1 = sum(mra(levelForReconstruction,:),1);
+ %   n
+    local{k}= TMRM1;
+modwtc_2{k} = TMRM1;
+end
+modwtc_2= modwtc_2'
+ 
+%%findchangepoints
+IPTs_2={};
+for k= 1: numberofcells
+    ipt1=findchangepts(modwtc_2{k});
+    IPTs_2{k}=ipt1;
+end
+IPTs_2=IPTs_2';
+%%
+%Plot Figure
+figure;histogram(cell2mat(IPTs_2), 'BinWidth', 5);
+ylabel({'Counts of Cells Depolarizing'});
+ 
+% Create xlabel
+xlabel({'Time Points'});
+ 
+% Create title
+title({'Time taken for \Delta \psim depolarization during Ischemia'});
+ 
+%% 
+% Finding the corresponding yvalue to plot the changed point
+IPTs_2_MAT=cell2mat(IPTs_2);
+IPT_2MAT_Depolarization_minutes= IPTs_2_MAT.*0.25; %% these are the values we need to determine the depolarization time point during Ischemia %change the multiplication factor based on the sampling period. I sampled @ 1 image every 15 seconds. 
+for x= 1: size(TMRM_Ischemia, 2)
+    local_corr_y(x)= TMRM_Ischemia(IPTs_2_MAT(x), x);
+end
+local_corr_y= local_corr_y';
+IPT_2MAT_addbaseline= IPTs_2_MAT+42;
+ 
+%%
+%plotting the figure of the Ischemia depolarization moment on the TMRM
+%Fluorescence
+figure; plot(TMRM,'DisplayName','TMRM')
+hold on; plot(IPT_2MAT_addbaseline, local_corr_y,  'k.', 'MarkerSize', 12); hold off
