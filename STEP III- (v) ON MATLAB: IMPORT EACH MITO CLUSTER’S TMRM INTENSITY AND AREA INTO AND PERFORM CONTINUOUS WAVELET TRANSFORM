@@ -1,0 +1,45 @@
+%%ON MATLAB: IMPORT EACH MITO CLUSTER’S TMRM INTENSITY AND AREA INTO AND PERFORM CONTINUOUS WAVELET TRANSFORM OF THE TMRM SIGNAL. 
+
+%%GETTING AREA AND MEAN INTENSITY OF EACH CLUSTER DURING REPERFUSION INTO AN ARRAY FOR CWT
+EachCellsMitoROI=uigetdir; %% SELECT DIRECTORY “AreaMean_5” get the directory where every cell's mitochondria’s TMRM intensity and area, during reperfusion are saved as a .csv results file
+Reper_results_dir=dir([EachCellsMitoROI '/*MeanResults.csv']);
+zz=size(Reper_results_dir, 1); %% get the number of files in that folder, i.e. number of cells
+for z=1:zz
+    z
+AllcellsandMitos_Mean = sprintf('Reper_%03d.tif_MeanResults.csv', z);
+AllcellsandMitos_Mean
+AllcellsandMitos_Results{z} = importdata(AllcellsandMitos_Mean);
+end
+ 
+AllcellsandMitos_Resultsmat=cell2mat(AllcellsandMitos_Results);
+
+%% STEP_6: CWTC OF MITOCHONDRIA FROM EACH CELL
+numberofcells= size(AllcellsandMitos_Resultsmat,2);
+ cwtc={};
+for k= 1: numberofcells
+    k
+    local={};
+for n= 1:size(AllcellsandMitos_Resultsmat(k).data, 2)
+ %   n
+    local{n}= cwt(AllcellsandMitos_Resultsmat(k).data(:,n), 1:64, 'sym8');
+end
+cwtc{k} = local;
+end
+cwtc= cwtc'
+ 
+%%%
+ 
+%% STEP_7: WRITE CWTs TO CSV (FOR IMAGEJ TO READ)
+selpath= uigetdir; %% CHOOSE DIRECTORY “CWT_6”
+[jc, jm] = size(cwtc);
+for k= 1: jc
+    k
+    eachrow= cwtc{k};
+      for er=1:size(eachrow, 2)
+            er
+        ffs= fullfile(selpath, sprintf('Cell_%03d_Cluster_%02d.csv', k, er));
+        csvwrite(ffs, eachrow{er});
+      end
+end
+ 
+%%%%
