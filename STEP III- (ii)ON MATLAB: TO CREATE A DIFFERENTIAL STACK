@@ -1,0 +1,53 @@
+ON MATLAB: TO CREATE A DIFFERENTIAL STACK
+  %%% change filenames of Reperfusion
+changefilename_dir= uigetdir; %% the “ReperfusionStack_2” folder
+filestochangenames = dir([ changefilename_dir '/*.tif']);
+ for l=1:length(filestochangenames)
+     l
+    oldFileName = filestochangenames(l).name;
+    oldFileName
+    startunderSym = strfind(oldFileName,'_');
+    startPerSym  = strfind(oldFileName,'.');
+    if ~isempty(startunderSym) && ~isempty(startPerSym)
+        fileNumber  = str2num(oldFileName(startunderSym(1)+1:startPerSym(1)-1));
+        fileNumber
+        newFileName = sprintf('Reper_%03d.tif',fileNumber);
+        newFileName
+        if exist(newFileName, 'file')
+               continue
+        else
+            movefile(oldFileName,newFileName);
+     
+        end
+    end
+ end
+ 
+%%% WITH CORRECT FILENAME%%%%%%
+Image_folder= uigetdir; %% select the ReperfusionStack_2 folder
+Diff_stack_folder=uigetdir; %% select the DifferentialStack_3 folder
+Image_Dir=dir([Image_folder '/*.tif']);
+total_images=size(Image_Dir, 1);
+   for n= 1: total_images
+       n
+    filename= Image_Dir(n).name;
+    info = imfinfo(filename);
+    num_images = numel(info);
+         for k = 1:(num_images-1)
+    startunderSym = findstr(filename,'_');
+    startPerSym  = findstr(filename,'.');
+    if ~isempty(startunderSym) && ~isempty(startPerSym)
+        fileNumber  = str2num(filename(startunderSym(1)+1:startPerSym(1)-1));
+        new_name = sprintf('test_%03d.tif',fileNumber);
+    end
+             fullDestination = fullfile(Diff_stack_folder,new_name);
+             A = imread(filename, k, 'Info', info);
+             B = imread(filename, k + 1, 'Info', info);
+             Q = A - B;  
+             imshow(Q, []);
+             imwrite(Q,fullDestination,'WriteMode', 'append');
+         end
+         n
+   fclose('all');
+   n
+   end
+ 
