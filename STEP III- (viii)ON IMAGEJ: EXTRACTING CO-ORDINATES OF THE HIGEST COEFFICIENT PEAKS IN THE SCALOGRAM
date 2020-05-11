@@ -1,0 +1,36 @@
+ON IMAGEJ: EXTRACTING CO-ORDINATES OF THE HIGEST COEFFICIENT PEAKS IN THE SCALOGRAM
+
+roiManager("reset");
+dir1 = getDirectory("Choose Directory "); // CHOOSE THE FOLDER “Results”
+dir2 = getDirectory("Choose Directory "); // CHOOSE THE FOLDER “TIFF”
+dir3 = getDirectory("Choose Directory "); // CHOOSE THE FOLDER “ROI”
+list = getFileList(dir2);
+
+setBatchMode(true);
+for (i=0; i<list.length; i++) {
+	showProgress(i, list.length);
+	
+file = dir2 + list[i];
+open(dir2+list[i]); 
+R=getTitle();
+	selectWindow(R);
+	ROIlist= getFileList(dir3);
+		run("ROI Manager...");
+     	roiManager("Open", dir3+ROIlist[i]);
+     	getInfo("selection.name");
+	selectWindow(R);
+	roiManager("Show None");
+roicount= roiManager("count");
+//titleZ="/Test.txt";
+titleZ= R+"_Brightest.txt";
+fileZ=File.open(dir1+titleZ);
+	for (j = 0; j < roicount; j++) {
+		roiManager("Select", j);
+		getRawStatistics(nPixels, mean, min, max); 
+		run("Find Maxima...", "noise="+max+" output=[Point Selection]"); 
+    	getSelectionBounds(x, y, w, h); 
+    	print(fileZ,x+","+y+","+getPixel(x,y)); 
+		}
+		File.close(fileZ);
+		roiManager("reset");
+}
