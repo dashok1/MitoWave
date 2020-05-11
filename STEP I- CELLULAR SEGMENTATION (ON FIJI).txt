@@ -1,0 +1,22 @@
+1.	Run StackReg plugin to align the images in the image stack
+
+2.	Macro 1: Creating a mask
+run("Duplicate...", "title= MASK2 duplicate");
+run("Duplicate...", "title=MASK1");
+selectWindow("");
+close();
+run("Median...", "radius=2");
+run("8-bit");
+run("Enhance Contrast...");
+run("Auto Local Threshold", "method=Niblack radius=40 parameter_1=0 parameter_2=0 white");
+selectWindow("MASK1");
+run("Analyze Particles...", "size=60.00-Infinity display clear include add");
+
+// save the ROIs after creating a mask of the segmented cells. 
+// Apply this ROI to the image stack to obtain Fluorescence Intensity 
+
+3.	Macro 2: Obtain fluorescence intensity per cell
+run("Set Measurements...", "mean redirect=None decimal=3");
+roiManager("Show None");
+roiManager("Show All");
+roiManager("Multi Measure");
