@@ -1,0 +1,168 @@
+%%ON MATLAB: DATA REDUCTION PROCESS TO SEPARATE FREQUENCIES OF MITOCHONDRIAL CLUSTERS INTO 6 FREQUENCY BANDS AND OBTAIN THEIR ASSOCIATED TIME. (The final frequencies and associated time are averages within a particular frequency band).  
+
+MeanThresholded_ResultsCopy= repmat(MeanThresholded_Results,1); %% duplicate the array containing co-ordinates of peak coefficients 
+for i = 1:size(MeanThresholded_ResultsCopy,1) %% i= number of cells
+        dead_mito_count=0; %% assign as 0 and count if there are dead mitos
+        current_cell=MeanThresholded_ResultsCopy{i,1}; %% current_cell is the whole current cell with many mitos
+        current_brightest_cell= Brightest_Results{i, 1}; %% using the brightest points and not the centroid to obtain Xm and Ym
+        mito_death_time_array=[]; %% when each mito of a cell dies during reperfusion
+        for j = 1:size(current_cell,2) %% j is the number of columns, equivalent to the number of mitos in a cell
+            col_header=current_cell{1,j}.Properties.VariableNames; %%1 HAS BEEN ASSIGNED TO THEM- TO START THEM OFF.SOMETHING LIKE A PRE-ALLOCATION. AFTER THAT, DIFFERENT NUMBERS WILL BE ASSIGNED TO THEM BASED ON WHAT COMES OUT OF THE FORLOOP IN THE NEXT SET OF CODES.
+            col_Area=1;
+            col_BX=1;
+            col_Width=1;
+            col_max_coeff=1;
+            col_XM=1;
+            col_YM=1;
+            local_max=-1000; %% TO INITIALIZE; THIS IS THE LOWEST VALUE AND EVERY VALUE WE LOOK AT WILL BE ABOVE THIS
+            
+            index=2;
+            
+                for k=1:size(col_header,2) %% k is the number of columns of all the parameters from nanmean thresholded results (from 1 to 18). With this for loop we want to get the number assigned to a particular column.
+                     if strcmp(col_header{1,k},'Area') %% asking for which col_header matches 'Area'. Usually its the first column. 
+                    col_Area=k; %% usually col_Area is 1. 
+                     end
+                     if strcmp(col_header{1,k},'BX')
+                    col_BX=k;
+                     end
+                     if strcmp(col_header{1,k},'Width')
+                    col_Width=k;
+                     end
+                    if strcmp(col_header{1,k},'Max')
+                    col_max_coeff=k;
+                    end
+                end
+            
+            current_data1=current_cell{1,j};%% NOW WE WILL GO THROUGH EVERY MITO AND ITS CHARACTERESTICS OF A SIGNLE CELL. current_data has the information for a single mito 
+            current_data = current_data1{:,1:12};
+            
+            current_brightest_data= current_brightest_cell{1, j}; %% current_brightest_cell has the information for a single mito, but has Xm and Ym from the brightest points, and not from the centroid/ center of maximum (since those are just averages and not the actual brightest points..  
+           BX_Width_sum = current_data(:,9) + current_data(:,11);
+            for k = 1:size(BX_Width_sum) %% from the second largest area (leaving out the first because thats the begining of the reperfusion phase)
+                    if (local_max < BX_Width_sum(k))
+                        local_max = BX_Width_sum(k); %% its considering the maximum coefficient after discarding the 1st maximum coefficient and the next maximum coeffient from the maximum area
+                        index = k
+                    end
+            end
+         relevant_max = -1000;
+         for k = 2:size(current_data,1) %% from the second largest area (leaving out the first because thats the begining of the reperfusion phase)
+                    if (k ~= index && relevant_max < current_data(k,col_max_coeff))
+                        relevant_max = current_data(k,col_max_coeff); 
+                    end
+            end
+            %%%%%%%%%%%%%%%
+         
+             if (size(current_data,1)<=2 | (local_max==241 && relevant_max<=80))
+           MeanThresholded_ResultsCopy{i,1}{1,j}(:,'classification') = {'dead'};
+           %% if the max coefficient of the second or third largest area is less than 80, then the mito is dead.
+                mito_death_time=0; %% the mito death time is 0, because it has been dead from the begining
+                dead_mito_count=dead_mito_count+1; %% we start counting the dead mitos as 1
+            else 
+                MeanThresholded_ResultsCopy{i,1}{1,j}(:,'classification')={'not dead'}; %% if the coefficient of that largest area is more than 80, the mito is classified as 'not dead'.
+            
+            local_max=-1000;
+            index = 2;
+                for k = 2:size(current_data,1) %% from the second largest area (leaving out the first because thats the begining of the reperfusion phase)
+                    if (current_data(k,col_Area)>=1000&& local_max < current_data(k,col_max_coeff))
+                        local_max = current_data(k,col_max_coeff); %% its considering the maximum coefficient after discarding the 1st maximum coefficient and the next maximum coeffient from the maximum area
+                        index = k
+                    end
+                end
+                time_pt=current_data(index,col_BX)+current_data(index,col_Width);%% its finding the time point at which the mito dies, by considering the largest area's end X location
+                time_pt
+                if time_pt<= 240 %% depending on the time points of the reperfusion experiment, this value may need to be changed. If the time point is less than 240, then we need to know when the mito died. 
+                    MeanThresholded_ResultsCopy{i,1}{1,j}(:, 'mito_death_time')={time_pt};
+                    mito_death_time_array(j)=time_pt;
+                %cell_classification{i,2}=time_pt;
+                else
+                    MeanThresholded_ResultsCopy{i,1}{1,j}(:,'mito_death_time')={241};%% if the mito didn't die, then just write 241 (or whatever the end of reperfusion time point is)
+                    mito_death_time_array(j)=241;
+                end
+                
+                osc_data_array=[];%% PREALLOCATING FOR WRITING IN THE LOCATION OF THE BRIGHTEST SPOTS IN THE CWT- WHICH CORRESPONDS TO THE SCALE AND TIME
+                osc_index=0;
+                for k = 2:size(current_data,1) %% considering only the rows that are not the begining or the ending (ones with largest areas and coefficients)
+                    local_sum=current_data(k,col_BX)+current_data(k,col_Width); %% incase the mito dies during the experiment, we still need the scale and time before it dies. So this local_sum considers the points before the mito dies
+                    if (k~=index && local_sum<=time_pt)
+                        osc_index=osc_index+1; %% when the mito is not dead yet, then osc_index is atleast 1 (and not 0). 
+                        osc_data_array(osc_index,1)=current_brightest_data(k,1); %% takes the k-th row and the first column which has the X coordinate (for the time)
+                        osc_data_array(osc_index,2)=64-current_brightest_data(k,2); %% takes the k- th row and the second column which has the Y co-ordinate for the scale. But since the Y-axis is inverted (a bug in image j??), we'd have to subtract the Y value from 64 to get the actual scale value corresponding to the time.
+                        osc_data_array(osc_index, 3)= current_brightest_data(k, 3);
+                    end
+                end
+                if (osc_index==0) 
+                    MeanThresholded_ResultsCopy{i,1}{1,j}(:,'classification')={'noise'};
+                else
+                    
+                    osc_data_avg_XM=nanmean(osc_data_array(:, 1)); %% for a particular mito, we get the average time (by getting the nanmean of all the rows in the first column, with X-cordinates)
+                    osc_data_std_XM=std(osc_data_array(:, 1));  
+                    osc_data_avg_YM=nanmean(osc_data_array(:,2));%% for a particular mito, we get the average scale (by getting the nanmean of all the rows in the second column, with the Y-cordinates subtracted from 64) 
+                    osc_data_std_YM=std(osc_data_array(:, 2));
+                    
+                    XM_list= osc_data_array(:, 1);
+                    YM_list= osc_data_array(:, 2);
+                    BrightestCoeff_list= osc_data_array(:, 3);
+                     YM_real_fast_mean= nanmean(YM_list(YM_list>=0. & YM_list<=5));
+                   XM_real_fast_time =nanmean(XM_list(find(YM_list>=1 & YM_list<=5))); 
+                   BrightestCoeff_real_fast_mean= nanmean(BrightestCoeff_list(find(YM_list>=1 & YM_list<=5)));
+                     YM_fast_mean    =nanmean(YM_list(YM_list>5 & YM_list<=10));
+                   XM_fast_time      =nanmean(XM_list(find(YM_list>5 & YM_list<=10)));
+                   BrightestCoeff_fast_mean= nanmean(BrightestCoeff_list(find(YM_list>5 & YM_list<=10)));
+                    YM_moderate_mean =nanmean(YM_list(YM_list >10 & YM_list<=15));
+                   XM_moderate_time  =nanmean(XM_list(find(YM_list >10 & YM_list<=15)));   
+                   BrightestCoeff_moderate_mean= nanmean(BrightestCoeff_list(find(YM_list >10 & YM_list<=15))); 
+                    YM_slow_mean     =nanmean(YM_list(YM_list>15 & YM_list<=20));
+                   XM_slow_time      =nanmean(XM_list(find(YM_list>15 & YM_list<=20)));
+                   BrightestCoeff_slow_mean= nanmean(BrightestCoeff_list(find(YM_list>15 & YM_list<=20)));
+                    YM_slower_mean   =nanmean(YM_list(YM_list>20 & YM_list<=25));
+                   XM_slower_time    =nanmean(XM_list(find(YM_list>20 & YM_list<=25)));
+                   BrightestCoeff_slower_mean= nanmean(BrightestCoeff_list(find(YM_list>20 & YM_list<=25)));
+                    YM_nonoscillating_mean=nanmean(YM_list(YM_list>25));
+                   XM_nonoscillating_time=nanmean(XM_list(find(YM_list>25)));
+                   BrightestCoeff_nonoscillating_mean= nanmean(BrightestCoeff_list(find(YM_list>25)));
+                    real_fast_XM= osc_data_array(osc_data_array(:, 2)>1 & osc_data_array(:, 2)<5); %finds the corresponding Xms; finding scale values of only fast oscillations (scale below 5)
+                    
+                    MeanThresholded_ResultsCopy{i,1}{1,j}(:, 'Real_fast_mean')= {YM_real_fast_mean};
+                    MeanThresholded_ResultsCopy{i,1}{1,j}(:, 'Real_fast_TIME')={XM_real_fast_time};
+                    MeanThresholded_ResultsCopy{i,1}{1,j}(:, 'BrightestCoeff_real_fast_mean')={BrightestCoeff_real_fast_mean};
+                    MeanThresholded_ResultsCopy{i,1}{1,j}(:, 'Fast_mean')= {YM_fast_mean};
+                    MeanThresholded_ResultsCopy{i,1}{1,j}(:, 'Fast_TIME')={XM_fast_time};
+                    MeanThresholded_ResultsCopy{i,1}{1,j}(:, 'BrightestCoeff_fast_mean')={BrightestCoeff_fast_mean};
+                    MeanThresholded_ResultsCopy{i,1}{1,j}(:, 'Moderate_mean')= {YM_moderate_mean};
+                    MeanThresholded_ResultsCopy{i,1}{1,j}(:, 'Moderate_TIME')= {XM_moderate_time};
+                    MeanThresholded_ResultsCopy{i,1}{1,j}(:, 'BrightestCoeff_moderate_mean')={BrightestCoeff_moderate_mean};
+                    MeanThresholded_ResultsCopy{i,1}{1,j}(:, 'Slow_mean')= {YM_slow_mean};
+                    MeanThresholded_ResultsCopy{i,1}{1,j}(:, 'Slow_TIME')={ XM_slow_time};
+                    MeanThresholded_ResultsCopy{i,1}{1,j}(:, 'BrightestCoeff_slow_mean')= {BrightestCoeff_slow_mean};
+                    MeanThresholded_ResultsCopy{i,1}{1,j}(:, 'Slower_mean')= {YM_slower_mean};
+                    MeanThresholded_ResultsCopy{i,1}{1,j}(:, 'Slower_TIME')={XM_slower_time};
+                    MeanThresholded_ResultsCopy{i,1}{1,j}(:, 'BrightestCoeff_slower_mean')={BrightestCoeff_slower_mean};
+                    MeanThresholded_ResultsCopy{i,1}{1,j}(:, 'NonOscillating_mean')= {YM_nonoscillating_mean};
+                    MeanThresholded_ResultsCopy{i,1}{1,j}(:, 'NonOscillating_TIME')={XM_nonoscillating_time};
+                    MeanThresholded_ResultsCopy{i,1}{1,j}(:, 'BrightestCoeff_nonoscillating_mean')={BrightestCoeff_nonoscillating_mean};
+       
+                    MeanThresholded_ResultsCopy{i,1}{1,j}(:, 'avg_osc_XM')= {osc_data_avg_XM}; %% with this line, we are introducing the parameters of scale and time to save along with every mito
+                    MeanThresholded_ResultsCopy{i,1}{1,j}(:,'std_osc_XM')={osc_data_std_XM};
+                    MeanThresholded_ResultsCopy{i,1}{1,j}(:,'avg_osc_YM')={osc_data_avg_YM};
+                    MeanThresholded_ResultsCopy{i,1}{1,j}(:,'std_osc_YM')={osc_data_std_YM};
+                    
+                    if (osc_data_avg_YM < 15) %% we classify every mito as 'slow', 'fast' or 'non oscillating' based on the average scale value we obtain 
+                        MeanThresholded_ResultsCopy{i,1}{1,j}(:,'osc_classification')={'fast'};
+                    else
+                        if (15<=osc_data_avg_YM && osc_data_avg_YM<=25)
+                            MeanThresholded_ResultsCopy{i,1}{1,j}(:,'osc_classification')={'slow'};
+                        else
+                            MeanThresholded_ResultsCopy{i,1}{1,j}(:,'osc_classification')={'non oscillating'};
+                        end
+                    end
+                end
+            end
+        end
+        if dead_mito_count/size(MeanThresholded_ResultsCopy{i,1},2) >= 0.6 %% if more than 60% of the mitos in each cell are dead, then the whole cell is considered as dead
+            cell_classification{i,1}='dead'; %% we have a separate cell_classification array to record which cells are dead and when they died.
+            cell_classification{i,2} = 0;
+        else
+            cell_classification{i,1}='not dead'; %% if more than 60% of the mitos of a cell are not dead, then the whole cell is considered as alive. If some of the mitos did die along the way, their mito_death_time were considered and the mito that held out the longest was used as the time for the cell death
+            cell_classification{i,2} = max(mito_death_time_array);
+        end
+end
