@@ -1,0 +1,33 @@
+// a. ON IMAGEJ: APPLY THRESHOLD TO THE CWT SCALOGRAM IMAGES 
+dir1 = getDirectory("Choose Directory "); // CHOOSE FOLDER “CWTtoImageJ_7”
+dir2 = getDirectory("Choose Directory "); // CHOOSE THE FOLDER “Results” INSIDE “ApplyingThreshold_8” folder to save .csv files
+dir3 = getDirectory("Choose Directory "); // CHOOSE THE FOLDER “Tiff” INSIDE “ApplyingThreshold_8” FOLDER to save .TIFF files 
+dir4 = getDirectory("Choose Directory "); // CHOOSE THE FOLDER “ROI” INSIDE “ApplyingThreshold_8” FOLDER to save THE ROI files
+list = getFileList(dir1);
+setBatchMode(true);
+for (i=0; i<list.length; i++) {
+file = dir1 + list[i];
+open(dir1+list[i]);
+T= getTitle(); 
+run("Flip Vertically");
+run("Duplicate...", "title=Copy.tif ");
+selectWindow("Copy.tif");
+run("16-bit");
+selectWindow("Copy.tif");
+run("Auto Threshold", "method=Mean white");
+run("Set Measurements...", "area min centroid center perimeter bounding shape skewness stack invert redirect=None decimal=3");
+run("Analyze Particles...", "display clear include add");
+close("Copy.tif");
+selectWindow(T);
+roiManager("Show None");
+roiManager("Show All");
+roiManager("multi-measure measure_all");
+run("Input/Output...", "jpeg=85 gif=-1 file=.csv use_file copy_column save_column");
+titleX=T+"_RoiSet.zip";
+titleY=T+"_Results.csv";
+saveAs("Tiff", dir3+list[i]);
+roiManager("Save", dir4+titleX);
+saveAs("Results", dir2+titleY);
+roiManager("reset");
+};
+setBatchMode(false);
