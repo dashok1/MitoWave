@@ -1,0 +1,43 @@
+//ON FIJI	: TO GET THE AREA AND MEAN FOR EACH MITOCHONDRIAL CLUSTER
+roiManager("reset");
+dir_4 = getDirectory("Choose a Directory"); // Choose the “ROIofMitoClusters_4” folder
+dir_2 = getDirectory("Choose a Directory");// Choose the “ReperfusionStack_2” folder
+dir_5 = getDirectory("Choose a Directory"); // Choose the “AreaMean_5” folder
+list = getFileList(dir_2);
+setBatchMode(true);
+	for (i=0; i<list.length; i++) {
+	showProgress(i, list.length);
+	fileR = dir_2 + list[i];
+	open(dir_2+list[i]);
+	R=getTitle();
+	selectWindow(R);
+	print(R);
+	print("The image title is " + R);
+	run("Set Measurements...", "mean redirect=None decimal=3");
+	ROIlist= getFileList(dir_4);
+		run("ROI Manager...");
+      	roiManager("Open", dir_4+ROIlist[i]);
+      	getInfo("selection.name");
+      
+	selectWindow(R);
+	roiManager("Show None");
+	roiManager("Show All");
+	roiManager("Multi Measure");
+	run("Input/Output...", "jpeg=85 gif=-1 file=.csv use_file copy_column save_column");
+	titleM=R+"_MeanResults.csv";
+	saveAs("Results", dir_5+titleM);
+	run("Set Measurements...", "area redirect=None decimal=3");
+	selectWindow(R);
+	roiManager("Show None");
+	roiManager("Show All");
+	roiManager("measure");
+	titleA=R+"_AreaResults.csv";
+	saveAs("Results", dir_5+titleA);
+roiManager("reset");
+	
+	selectWindow(R);
+	close(R);
+//	close(M);
+	
+	};
+setBatchMode(false);
