@@ -1,0 +1,29 @@
+//CHANGE THE REPERFUSION DUPLICATE STACK ACCORDING TO WHEN REPERFUSION HAPPENED
+dir1 = getDirectory("Choose Directory "); // Choose the “CroppedCells_1” folder
+dir2 = getDirectory("Choose Directory "); // Choose the “ReperfusionStack_2” folder
+roicount= roiManager("count");
+T=getTitle();
+print(T);
+print(roicount);
+setBatchMode(true);
+for (i = 0; i < roicount; i++) 
+{
+
+selectWindow(T);
+run("Duplicate...", "title=[IR copy] duplicate");
+roiManager("Select", i);
+run("Clear Outside", "stack");
+roiManager("Select", i);
+run("Duplicate...", "title=copy duplicate");
+selectWindow("IR copy");
+roiManager("Select", i);
+run("Duplicate...", "title=[copy reperfusion] duplicate range=283-523");
+selectWindow("copy");
+saveAs("Tiff", dir1+"Cell_"+i+1);
+selectWindow("copy reperfusion");
+saveAs("Tiff", dir2+"Reper_"+i+1);
+selectWindow("IR copy");
+close("IR copy");
+selectWindow(T);
+}
+setBatchMode(false);
