@@ -1,0 +1,65 @@
+%%ON MATLAB: IMPORT DATA OF SCALOGRAM COEFFICIENTS INTO MATLAB
+
+%% convert brightest points .txt file to .csv file for importing into MATLAB
+Brightestpoints=uigetdir
+Brightestpoints_dir= dir([Brightestpoints '/*Brightest.txt']);
+numberoffiles= size(Brightestpoints_dir,1);
+for m=1: numberofcells
+       m
+      eachrow= cwtc{m}
+      eachcell= {};
+       for er = 1: size(eachrow, 2);
+           er
+myfilename = sprintf('Cell_%03d_Cluster_%02d.tif_Brightest.txt', m, er);
+myfilename
+fileID = fopen(myfilename,'r');
+dataArray = textscan(fileID, '%n%n%n', 'Delimiter', ',');
+fclose(fileID);
+newfilename= sprintf('Cell_%03d_Cluster_%02d.tif_Brightest.csv', m, er);
+csvwrite(newfilename, dataArray)
+       end
+end
+ 
+ 
+%%%%%%% import CO-ORDINATES OF COEFFICIENT PEAKS THAT WERE THRESHOLDED ON IMAGEJ
+ 
+MeanThresholded=uigetdir
+MeanThresholded_dir= dir([MeanThresholded '/*.csv']);
+numberoffiles= size(MeanThresholded_dir,1);
+MeanThresholded_Results = {};
+    for m=1: numberofcells
+       m
+      eachrow= cwtc{m}
+      eachcell= {};
+       for er = 1: size(eachrow, 2);
+           er
+myfilename = sprintf('Cell_%03d_Cluster_%02d.tif_Results.csv', m, er);
+myfilename
+eachcell{er}= importdata(myfilename);
+       end
+    MeanThresholded_Results{m}= eachcell;
+    end
+ MeanThresholded_Results= MeanThresholded_Results' %% Contains the coordinates of the peak coefficients that were thresholded in the scalogram. 
+ 
+ 
+%%%%%% import BRIGHTEST Point
+ 
+MeanThresholded=uigetdir
+MeanThresholded_dir= dir([MeanThresholded '/*.csv']);
+numberoffiles= size(MeanThresholded_dir,1);
+Brightest_Results = {};
+    for m=1: numberofcells
+       m
+      eachrow= cwtc{m}
+      eachcell= {};
+       for er = 1: size(eachrow, 2);
+           er
+myfilename = sprintf('Cell_%03d_Cluster_%02d.tif_Brightest.csv', m, er);
+myfilename
+eachcell{er}= importdata(myfilename);
+       end
+    Brightest_Results{m}= eachcell;
+    end
+ Brightest_Results= Brightest_Results' 
+ 
+%%%
