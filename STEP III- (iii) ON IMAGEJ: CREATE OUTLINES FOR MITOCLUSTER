@@ -1,4 +1,4 @@
-4.	ON FIJI: TO CREATE OUTLINES FOR EACH MITOCHONDRIAL CLUSTER
+//ON FIJI: TO CREATE OUTLINES FOR EACH MITOCHONDRIAL CLUSTER
 dir3 = getDirectory("Choose Directory "); // Choose the “DifferentialStack_3” folder
 dir4 = getDirectory("Choose Directory "); // Choose the “ROIofMitoClusters_4” folder
 list = getFileList(dir3);
