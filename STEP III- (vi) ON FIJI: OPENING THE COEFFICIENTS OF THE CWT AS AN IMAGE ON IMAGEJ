@@ -1,0 +1,11 @@
+//ON IMAGEJ: OPENING THE COEFFICIENTS OF THE CWT AS AN IMAGE ON IMAGEJ
+dir1 = getDirectory("Choose Directory "); // CHOOSE DIRECTORY “CWT_6” with all the CWTs written as CSVs
+dir2 = getDirectory("Choose Directory "); // CHOOSE DIRECTORY “CWTtoImageJ_7 ” to save CWTs as a .tiff file for Imagej to read
+list = getFileList(dir1);
+setBatchMode(true);
+for (i=0; i<list.length; i++) {
+ file = dir1 + list[i];
+ run("Text Image... ", "open=&file");
+ saveAs("Tiff", dir2+list[i]);
+};
+setBatchMode(false);
