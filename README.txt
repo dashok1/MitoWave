@@ -2,13 +2,12 @@
 Spatio-Temporal Mitochondrial membrane potential fluctuation Analysis during Ischemia Reperfusion
 
 This routine requires switching between ImageJ(OR FIJI) and MATLAB.
-Language written for ImageJ is ImageJ Macro or .ijm. They run on FIJI. 
-Comments and annotations are in //Green or %Green. 
-Modifications must be made if sampling rate is different from what we used. We sampled at the rate of 1 image every 15 seconds to get 241 images in a period of 60.25 minutes. Modification points are highlighted in blue. 
-Arrays containing required data for Ischemia ΔΨm depolarization time, Average frequency of each cell, mitochondrial frequencies and associated timepoints, mitochondrial cluster areas, mitochondrial ΔΨm depolarization time, cellular depolarization time are in Bold and Highlighted in yellow. 
-Step III point 13 gives a summary of the final results with the names of the arrays where the relevant data are stored
+Language written for ImageJ is ImageJ Macro or .ijm. It can be copy pasted to run on FIJI. 
+Comments and annotations are after  '//' or '%%'. 
+Modifications must be made if sampling rate is different from what we used. We sampled at the rate of 1 image every 15 seconds to get 241 images in a period of 60.25 minutes. 
+Arrays containing required data for Ischemia ΔΨm depolarization time, Average frequency of each cell, mitochondrial frequencies and associated timepoints, mitochondrial cluster areas, mitochondrial ΔΨm depolarization time, cellular depolarization time are described below. 
 
-RESULTS ARE IN THE FOLLOWING ARRAYS:
+FINAL RESULTS ARE IN THE FOLLOWING ARRAYS:
 
 IPT_2MAT_Depolarization_minutes – Has the time point at which a cell depolarized during Ischemia 
 
