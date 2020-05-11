@@ -1,0 +1,9 @@
+Create 8 folders with the following names to save data from each step: 
+(i)	    CroppedCells_1  // To separate each cell in the I/R imagestack and save
+(ii)	  ReperfusionStack_2 // Separate and save reperfusion phase for each cell
+(iii)	  DifferentialStack_3// Save Differential stack (n-(n+1)th image
+(iv)	  ROIofMitoClusters_4
+(v)	    AreaMean_5
+(vi)	  CWT_6
+(vii)	  CWTtoImageJ_7 
+(viii)	ApplyingThreshold_8; with 3 subfolders “Results”, “TIFF”, “ROI”.
